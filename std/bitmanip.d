@@ -2278,14 +2278,24 @@ unittest
 private auto nativeToBigEndianImpl(T)(T val) @safe pure nothrow @nogc
     if(isIntegral!T || isSomeChar!T || isBoolean!T)
 {
-    EndianSwapper!T es = void;
-
-    version(LittleEndian)
-        es.value = swapEndian(val);
-    else
-        es.value = val;
-
-    return es.array;
+    if ( __ctfe ) {
+        Unqual!T tmp = val;
+        ubyte[t.sizeof] result;
+        foreach( byteNum; 0..T.sizeof ) {
+          result[byteNum] = cast(ubyte)( tmp >> ( T.sizeof - 1 - byteNum ) );
+        }
+        return result;
+    }
+    else {
+        EndianSwapper!T es = void;
+    
+        version(LittleEndian)
+            es.value = swapEndian(val);
+        else
+            es.value = val;
+    
+        return es.array;
+    }
 }
 
 private auto nativeToBigEndianImpl(T)(T val) @safe pure nothrow @nogc
@@ -2452,14 +2462,25 @@ unittest
 private auto nativeToLittleEndianImpl(T)(T val) @safe pure nothrow @nogc
     if(isIntegral!T || isSomeChar!T || isBoolean!T)
 {
-    EndianSwapper!T es = void;
-
-    version(BigEndian)
-        es.value = swapEndian(val);
-    else
-        es.value = val;
-
-    return es.array;
+    if ( __ctfe ) {
+        Unqual!T tmp = val;
+        ubyte[t.sizeof] result;
+        foreach( byteNum; 0..T.sizeof ) {
+          result[byteNum] = cast(ubyte)( tmp );
+          tmp >>= 8;
+        }
+        return result;
+    }
+    else {
+        EndianSwapper!T es = void;
+    
+        version(BigEndian)
+            es.value = swapEndian(val);
+        else
+            es.value = val;
+    
+        return es.array;
+    }
 }
 
 private auto nativeToLittleEndianImpl(T)(T val) @safe pure nothrow @nogc
